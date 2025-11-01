@@ -1,8 +1,9 @@
 use core::f64;
 
 use bevy::prelude::*;
-use super::celestial_body::star::Star;
-use super::celestial_body::planet::Planet;
+use super::solar_system::star::Star;
+use super::solar_system::planet::Planet;
+use crate::stellar_utils::unit_conversion::*;
 
 pub const G: f64 = 6.6743015e-11;
 const SOL_MASS: f64 = 2e14;
@@ -21,7 +22,7 @@ pub fn calculate_acceleration(
         accel += acceleration(
             &body.1.translation.xy(), 
             position, 
-            1.0 * body.0.mass as f64, 
+            earths(body.0.mass) as f64, 
             0.5 * body.0.radius as f64);
     }
 
@@ -29,16 +30,17 @@ pub fn calculate_acceleration(
         accel += acceleration(
             &star.1.translation.xy(), 
             position, 
-            SOL_MASS * star.0.mass as f64, 
+            earths(star.0.mass) as f64, 
             2.5 * star.0.radius as f64)
     }
 
-    return accel;
+    accel
 }
 
 //modified newton's. Ignores mass of one of the objects, and adds a repulsive force when close by
 pub fn acceleration(pos1: &Vec2, pos2: &Vec2, mass: f64, radius: f64) -> Vec2 {
     let delta_pos = pos1 - pos2;
+    let mass = mass * 1e-10;
 
     //true distance is split into two calculations  since we want to check for zero
     let distance_squared = delta_pos.length_squared() as f64;

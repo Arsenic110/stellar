@@ -1,4 +1,5 @@
-use crate::stellar_core::celestial_body::{star::Star, orbit::Orbit};
+use crate::stellar_core::solar_system::Orbit;
+use crate::stellar_core::solar_system::Star;
 
 pub fn generate_star(solar_mass: f64, age_gy: f64, metallicity: f64) -> Star
 {
@@ -122,8 +123,9 @@ fn get_remnant_properties(mass: f64, _age_gy: f64, _metallicity: f64) -> (f64, f
     //love to see these 4 constants together, because it means funky shit goes down
     let const_g = 0.000000000066743;    //gravitational constant
     let const_c: f64 = 299792458.0;          //m/s - speed of light
-    let hbar = 1.0545718e-34;           // Reduced Planck constant (J s)
-    let k_b = 1.380649e-23;             // Boltzmann constant (J/K)
+    let _hbar = 1.0545718e-34;           // Reduced Planck constant (J s)
+    let _k_b = 1.380649e-23;             // Boltzmann constant (J/K)
+    let s_b = 5.670374e-8;              //Stefan-Boltzmann constant
 
     let remnant_type = match mass {
         x if x > 3.0 => "BH",                       //black hole
@@ -139,14 +141,14 @@ fn get_remnant_properties(mass: f64, _age_gy: f64, _metallicity: f64) -> (f64, f
 
     let temperature = match remnant_type {
         //hawking radiation!
-        "BH" => (hbar * const_c.powi(2)) / (8.0 * std::f64::consts::PI * const_g * mass / 2.0e30 * k_b),
+        "BH" => 0.0,
         "NS" => 1000000.0 - 100000.0 * (mass / 1.0),
         _ => 10000.0 - 500.0 * (mass / 1.0)
     };
 
     let luminosity = match remnant_type {
         "BH" => 0.0, //it should glow at hawking temp but its wholly negligible
-        _ => temperature * radius //ayy
+        _ => 4.0 * std::f64::consts::PI * radius.powi(2) * s_b * temperature.powi(4) / 3.38e7
     };
 
     let lifespan = std::f64::MAX; //lifespan becomes irrelevant here

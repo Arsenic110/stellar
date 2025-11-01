@@ -12,8 +12,8 @@
     "Sulfur World - A world more similar to hell than reality. Venus"
 */
 
-use crate::stellar_core::celestial_body::planet::Planet;
-use crate::stellar_core::celestial_body::orbit::Orbit;
+use crate::stellar_core::solar_system::Orbit;
+use crate::stellar_core::solar_system::Planet;
 
 use rand_distr::{Distribution, Normal};
 
@@ -23,15 +23,18 @@ pub const EARTH_GRAVITY: f64 = 9.7803267715;
 pub const STEFAN_BOLTZMANN: f64 = 5.670374419e-8;
 pub const G: f64 = 6.6743015e-11;
 
-pub fn generate_planet(mass: f64, density: f64, solar_flux: f64, magnetic_field: f64) -> Planet {
+
+pub fn generate_planet(earth_mass: f64, density: f64, solar_flux: f64, magnetic_field: f64,
+    orbit: Orbit) -> Planet {
 
     //in meters
-    let radius = f64::powf((3.0 * mass) / (4.0 * core::f64::consts::PI * density), 1.0 / 3.0);
+    let radius = f64::powf((3.0 * earth_mass * EARTH_MASS) / (4.0 * core::f64::consts::PI * density), 1.0 / 3.0);
+
     //in Gs
-    let surface_gravity = (G as f64 * mass) / radius.powf(2.0) / EARTH_GRAVITY;
+    let surface_gravity = (G as f64 * earth_mass * EARTH_MASS) / radius.powf(2.0) / EARTH_GRAVITY;
 
     //in m/s
-    let escape_velocity = ((2.0 * G as f64 * mass) / radius).sqrt();
+    let escape_velocity = ((2.0 * G as f64 * earth_mass * EARTH_MASS) / radius).sqrt();
 
     let temp_base = 278.0 * solar_flux.sqrt();
     let mean_mol_weight = 28.97;
@@ -39,7 +42,7 @@ pub fn generate_planet(mass: f64, density: f64, solar_flux: f64, magnetic_field:
         escape_velocity / ((3.0 * 1.380649e-23 * temp_base / (mean_mol_weight * 1.66053906660e-27)).sqrt());
 
     //we wanna distribute the possible atmospheres normally, to get some more interesting generation
-    let nrm = Normal::new(mass / EARTH_MASS, 2.1).unwrap();
+    let nrm = Normal::new(earth_mass, 2.1).unwrap();
     let v: f64 = nrm.sample(&mut rand::rng()).abs();
 
     //use gas retention to modulate atmosphere retention (0.0 to 1.0 scale)
@@ -64,47 +67,70 @@ pub fn generate_planet(mass: f64, density: f64, solar_flux: f64, magnetic_field:
     let _equilibrium_temp = ((solar_flux * (1.0 - albedo)) / (4.0 * STEFAN_BOLTZMANN)).powf(0.25);
 
     //solar day length: just increase with size
-    let solar_day_length = 24.0 * (radius / EARTH_RADIUS).sqrt();
+    //let solar_day_length = 24.0 * (radius).sqrt();
 
     //magnetic field strength vs core and rotation
-    let rotation_speed = 1.0 / solar_day_length;
-    let magnetic_intensity = (mass / EARTH_MASS).sqrt() * rotation_speed;
+    //let rotation_speed = 1.0 / solar_day_length;
 
-    //plate tectonics estimation (requiring liquid core and sufficient mass etc)
-    let tectonic_activity = if mass > 0.5 * EARTH_MASS && temp > 200.0 {
-        "active"
-    } else {
-        "stagnant"
+    let tectonic_activity = match magnetic_field + normalize(temp, 200.0, 500.0) {
+        -1.0..0.2 => (1, "Dormant"),
+        0.2..0.4 => (2, "Barely Active"),
+        0.4..0.6 => (3, "Weakly Active"),
+        0.6..=1.0 => (4, "Moderately Active"),
+        1.0..1.2 => (5, "Strongly Active"),
+        1.2..1.4 => (6, "Unstable"),
+        1.4..10.0 => (7, "Permanent Resurfacing"),
+        _ => (0, "None")
     };
 
     //habitability score: crude, composite metric
-    let mut habitability = 1.0;
-    habitability *= if temp >= 273.0 && temp <= 373.0 { 1.0 } else { 0.5 };
-    habitability *= if atmos_pressure > 0.1 && atmos_pressure < 5.0 { 1.0 } else { 0.3 };
-    habitability *= if magnetic_intensity > 0.2 { 1.0 } else { 0.2 };
-    habitability *= if albedo > 0.1 && albedo < 0.7 { 1.0 } else { 0.7 };
+    let habitability = {
+        // Pressure score – values above 2 atm get capped.
+        let pressure_score = (atmos_pressure / 2.0).min(1.0);
+
+        // Temperature score – a linear fall‑off of 100 K from Earth’s mean.
+        let temp_diff = (temp - 288.0).abs();
+        let temp_score = (1.0 - (temp_diff / 100.0).min(1.0)).max(0.0);
+
+        // Magnetic field – anything > 1 is still 1.
+        let magnet_score = magnetic_field.min(1.0).max(0.0);
+
+        // Tectonic activity – hard‑coded weights.
+        let tectonics_score = match tectonic_activity {
+            (x, _) => 1.0 - (x - 4).max(0) as f64 / 7.0
+        };
+
+        // The final habitability metric is the mean of the four scores.
+        (pressure_score + temp_score + magnet_score + tectonics_score) / 4.0
+    };
 
     //composition estimation (based on density)
     let composition = match density {
-        d if d < 3000.0 => "gas giant or ice world",
+        d if d < 3000.0 && earth_mass >= 10.0 => "gas giant",
+        d if d < 3000.0 && earth_mass < 10.0 => "ice world",
         d if d < 5500.0 => "rocky with volatile-rich crust",
         _ => "rocky with metallic core",
     };
 
-    //dbg!((composition, radius, surface_gravity, escape_velocity, atmos_pressure, albedo, temp, _equilibrium_temp, tectonic_activity, habitability, orbital_period, semi_major_axis));
-
-    //CelestialBody { ..default() }
-    return Planet { 
-        mass: mass, 
+    let p = Planet { 
+        mass: earth_mass, 
         density: density, 
-        radius: radius, 
+        radius: radius / 1000.0, 
         surface_gravity: surface_gravity, 
         atmos_pressure: atmos_pressure, 
         surface_temperature: temp, 
         atmosphere_composition: vec![(composition.to_string(), 1.0)], 
         magnetic_field_strength: magnetic_field, 
-        tectonic_activity: tectonic_activity.to_string(), 
+        tectonic_activity: tectonic_activity.1.to_string(), 
         habitability: habitability,
-        orbit: Orbit::default()
+        orbit
     };
+
+    p
+}
+
+fn normalize(value: f64, min: f64, max: f64) -> f64 {
+    //clamp to 0–1
+    let v = (value - min).max(0.0).min(max - min);
+    v / (max - min)
 }

@@ -1,10 +1,10 @@
 use bevy::prelude::*;
 
-use crate::stellar_core::celestial_body::{satellite::Satellite, orbit::Orbit};
+use crate::stellar_core::solar_system::Orbit;
 
 use crate::procedural_generation::{self, gen_planet as gen};
 
-#[derive(Clone, Component, Debug)]
+#[derive(Clone, Component)]
 pub struct Planet {
     pub mass: f64,
     pub density: f64,
@@ -37,35 +37,42 @@ impl Default for Planet {
     }
 }
 
-impl Satellite for Planet {
-    fn get_orbit(self: &Self) -> Orbit {
-        self.orbit
-    }
-
-    fn set_orbit(self: &mut Self, orbit: Orbit) {
-        self.orbit = orbit;
+impl std::fmt::Debug for Planet {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(
+            format!("{:?} M(e): {:.3} D: {:.4}g/cm^3 R: {:.2}km Temp: {:.2}K", 
+            self.orbit, 
+            self.mass, 
+            self.density / 1000.0, 
+            self.radius, 
+            self.surface_temperature,
+        ).as_str())
     }
 }
 
 impl Planet {
-    pub fn new(mass:f64, density: f64, solar_flux: f64, magnetic_field: f64) -> Planet {
-        gen::generate_planet(mass, density, solar_flux, magnetic_field)
+    pub fn new(earth_mass: f64, density: f64, solar_flux: f64, magnetic_field: f64, orbit: Orbit) -> Planet {
+        gen::generate_planet(earth_mass, density, solar_flux, magnetic_field, orbit)
     }
 
     pub fn get_bundle(
-        planet: Self, x: f32, y: f32, mut images: &mut ResMut<Assets<Image>>
+        planet: Self, x: f32, y: f32, images: &mut ResMut<Assets<Image>>
     ) -> (Self, Sprite, Transform) {
         let radius = planet.radius;
-        let tex_size = radius as u32 / 100;
+        let tex_size = (radius as u32 / 100).max(1);
+
+        let sprite = Sprite {
+            image: procedural_generation::gen_icon::image_to_handle(
+                procedural_generation::gen_icon::render_icon(&planet, tex_size), 
+                images
+            ),
+            custom_size: Some(Vec2::splat(radius as f32)),
+            ..default()
+        };
 
         (
             planet,
-            Sprite { 
-                image: procedural_generation::circle_texture(
-                    tex_size, tex_size, &mut images, 0, 225, 255, 255),
-                custom_size: Some(Vec2::splat(radius as f32)),
-                ..default()
-            },
+            sprite,
             Transform::from_xyz(x, y, 0.0).with_scale(Vec3::splat(0.05))
         )
     }

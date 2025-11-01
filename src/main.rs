@@ -5,9 +5,8 @@
 use bevy::prelude::*;
 use bevy_prototype_lyon::prelude::*;
 
-//use crate::procedural_generation::{gen_planet::generate_planet as planet, gen_star::generate_star as star};
-
 mod stellar_core;
+mod stellar_utils;
 mod procedural_generation;
 mod ui;
 mod game;

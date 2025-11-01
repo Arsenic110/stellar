@@ -19,7 +19,7 @@ fn setup_camera(mut commands: Commands) {
     commands.spawn((
         Camera2d, 
         Camera { ..default() },
-        CamMode(Mode::Free)
+        CamMode(Mode::Chase)
     ));
 }
 

@@ -80,8 +80,8 @@ fn setup_ship(mut commands: Commands, asset_server : Res<AssetServer>) {
 //process gravity for the ship
 fn update_ship(
     mut ship_query: Query<(&mut stellar_core::ship::Ship, &mut Transform)>, 
-    bodies_query: Query<(&stellar_core::celestial_body::planet::Planet, &Transform), Without<stellar_core::ship::Ship>>,
-    stars_query: Query<(&stellar_core::celestial_body::star::Star, &Transform), Without<stellar_core::ship::Ship>>
+    bodies_query: Query<(&stellar_core::solar_system::planet::Planet, &Transform), Without<stellar_core::ship::Ship>>,
+    stars_query: Query<(&stellar_core::solar_system::star::Star, &Transform), Without<stellar_core::ship::Ship>>
 ) {
     //unpack and error handle the tuple
     //this pattern isnt exactly necessary but its okay

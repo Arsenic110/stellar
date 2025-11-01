@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::stellar_core::{camera, ship, celestial_body};
+use crate::stellar_core::{camera, ship, solar_system};
 use crate::ui;
 
 pub struct GamePlugin;
@@ -10,7 +10,7 @@ impl Plugin for GamePlugin {
             .add_plugins((
                     camera::CameraPlugin,
                     ship::ShipPlugin,
-                    celestial_body::SolarSystemPlugin,
+                    solar_system::SolarSystemPlugin,
                     ui::info_ui::UIPlugin,
                 )
             );

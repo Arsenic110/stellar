@@ -2,7 +2,7 @@
 
 pub mod ship;
 pub mod navigation;
-pub mod celestial_body;
+pub mod solar_system;
 pub mod camera;
 
 //im not sure if refactoring the utilities into the mod here is right,
