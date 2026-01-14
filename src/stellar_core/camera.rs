@@ -7,44 +7,35 @@ impl Plugin for CameraPlugin {
         //build plugin & add systems
         app
             .add_systems(Startup, setup_camera)
-            .add_systems(Update, update_camera)
+            .add_systems(Update, update_chase_camera)
             .add_systems(Update, update_free_camera)
             .add_systems(Update, update_cam_type)
+            .add_systems(Update, update_cam_zoom)
             ;
     }
 }
 
-//todo: overhaul with 3D cameras for spicy planet renders
+//todo: overhaul with 3D cameras for spicy planet renders?
 fn setup_camera(mut commands: Commands) {
     commands.spawn((
         Camera2d, 
         Camera { ..default() },
-        CamMode(Mode::Chase)
+        CamChase
     ));
 }
 
-fn update_camera(
-    mut camera_query: Query<(&mut Transform, &CamMode), With<Camera2d>>, 
-    mut evr_scroll: EventReader<MouseWheel>,
-    ship_query: Query<&mut Transform, (With<stellar_core::ship::Ship>, Without<Camera2d>)>
+//chase camerea
+fn update_chase_camera(
+    mut camera_query: Query<&mut Transform, (With<Camera2d>, With<CamChase>)>,
+    ship_query: Query<&Transform, (With<stellar_core::ship::Ship>, Without<Camera2d>)>
 ) {
-    let (mut transform, mode) = camera_query.single_mut();
-
-    if !(mode.0 == Mode::Chase) {
-        return;
-    }
-
-    let mut zoom: f32 = transform.scale.y;
-
-    //iterate through scroll events
-    for ev in evr_scroll.read() {
-        zoom *= 1.0 - ev.y / 10.0;
-    }
+    let mut transform = match camera_query.get_single_mut() {
+        Ok(single) => single,
+        Err(_) => return
+    };
 
     //set camera position to ship position.
     transform.translation = ship_query.single().translation;
-    //apply scale
-    transform.scale = Vec3 { x: zoom, y: zoom, z: zoom };
 
     //set ship scale to something relative so that it scales with zoom
     //ship_query.single_mut().scale = (transform.scale + 1.0) * 3.0;
@@ -52,30 +43,23 @@ fn update_camera(
 
 //freecam function
 fn update_free_camera(
-    mut camera_query: Query<(&mut Transform, &CamMode), With<Camera2d>>, 
-    input: Res<ButtonInput<KeyCode>>, 
-    mut evr_scroll: EventReader<MouseWheel>,
+    mut camera_query: Query<&mut Transform, (With<Camera2d>, With<CamFree>)>, 
+    input: Res<ButtonInput<KeyCode>>,
     mut evr_motion: EventReader<MouseMotion>,
     buttons: Res<ButtonInput<MouseButton>>
 ) {
-    let (mut transform, mode) = camera_query.single_mut();
-
-    if mode.0 != Mode::Free {
-        return;
-    }
+    let mut transform = match camera_query.get_single_mut() {
+        Ok(single) => single,
+        Err(_) => return
+    };
 
     let mut direction = Vec3::ZERO;
-    let mut zoom: f32 = transform.scale.y;
+    let zoom: f32 = transform.scale.y;
 
     if input.pressed(KeyCode::ArrowUp) { direction.y += 1.0; }
     if input.pressed(KeyCode::ArrowDown) { direction.y -= 1.0; }
     if input.pressed(KeyCode::ArrowLeft) { direction.x -= 1.0; }
     if input.pressed(KeyCode::ArrowRight) { direction.x += 1.0; }
-
-    //scroll wheel zoom
-    for ev in evr_scroll.read() {
-        zoom *= 1.0 - ev.y / 10.0;
-    }
 
     //mouse drag to move camera. cheap & easy solution - not always pixel-perfect
     for ev in evr_motion.read() {
@@ -86,41 +70,45 @@ fn update_free_camera(
 
     //apply translation and scale
     transform.translation += direction * zoom * 5.0;
-    transform.scale = Vec3 { x: zoom, y: zoom, z: zoom };
-
 }
 
 fn update_cam_type(
+    mut commands: Commands,
     input: Res<ButtonInput<KeyCode>>,
-    mut mode_query: Query<&mut CamMode, With<Camera2d>>
+    query: Query<(Entity, Option<&CamChase>, Option<&CamFree>), With<Camera2d>>
 ) {
-    for mut mode in mode_query.iter_mut() {
-        if input.just_released(KeyCode::Space) {
-            CamMode::switch(&mut mode);
-        }
+    if !input.just_released(KeyCode::Space) {
+        return;
     }
+
+    for (entity, c, _) in query.iter() {
+        let mut ec = commands.entity(entity);
+        match c {
+            Some(_) => {ec.remove::<CamChase>().insert(CamFree);},
+            None => {ec.remove::<CamFree>().insert(CamChase);}
+        }   
+    }
+}
+
+fn update_cam_zoom(
+    mut camera_query: Query<&mut Transform, With<Camera2d>>,
+    mut evr_scroll: EventReader<MouseWheel>,
+) {
+    let mut transform = camera_query.single_mut();
+    let mut zoom: f32 = transform.scale.y;
+
+    let scroll: f32 = evr_scroll.read().map(|ev| ev.y).sum();
+
+    if scroll != 0.0 {
+        zoom = (zoom * (1.0 - scroll / 10.0)).clamp(0.1, 10.0);
+    }
+
+    //apply the scale to the camera
+    transform.scale = Vec3 { x: zoom, y: zoom, z: zoom };
 }
 
 #[derive(Component)]
-pub struct CamMode(Mode);
+pub struct CamChase;
 
-impl CamMode {
-    pub fn get_str(self: &Self) -> &'static str {
-        match &self.0 {
-            Mode::Free => "Free",
-            Mode::Chase => "Chase",
-        }
-    }
-    pub fn switch(self: &mut Self) {
-        self.0 = match &self.0 {
-            Mode::Free => Mode::Chase,
-            Mode::Chase => Mode::Free,
-        }
-    }
-}
-
-#[derive(PartialEq)]
-pub enum Mode {
-    Free,
-    Chase
-}
+#[derive(Component)]
+pub struct CamFree;

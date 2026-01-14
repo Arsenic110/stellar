@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use crate::stellar_core::camera::CamMode;
+use crate::stellar_core::camera::{CamChase, };
 
 //plugin to wrap bevy functionality
 pub struct CamUIPlugin;
@@ -46,11 +46,11 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
 
 fn update(
     mut query: Query<&mut TextSpan, With<CamModeUIMarker>>,
-    mode_query: Query<&CamMode, With<Camera2d>>
+    mode_query: Query<Option<&CamChase>, With<Camera2d>>
 ) {
     for mut span in &mut query {
         for mode in &mode_query {
-            **span = format!("{}", mode.get_str());
+            **span = format!("{}", match mode {Some(_) => "Chase", None => "Free"});
         }
     }
 }
