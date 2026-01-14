@@ -7,8 +7,8 @@ impl Plugin for CameraPlugin {
         //build plugin & add systems
         app
             .add_systems(Startup, setup_camera)
-            .add_systems(Update, update_chase_camera)
-            .add_systems(Update, update_free_camera)
+            .add_systems(Update, update_chase_camera.run_if(any_with_component::<CamChase>))
+            .add_systems(Update, update_free_camera.run_if(any_with_component::<CamFree>))
             .add_systems(Update, update_cam_type)
             .add_systems(Update, update_cam_zoom)
             ;
@@ -24,18 +24,16 @@ fn setup_camera(mut commands: Commands) {
     ));
 }
 
-//chase camerea
+//chase camera
 fn update_chase_camera(
     mut camera_query: Query<&mut Transform, (With<Camera2d>, With<CamChase>)>,
     ship_query: Query<&Transform, (With<stellar_core::ship::Ship>, Without<Camera2d>)>
 ) {
-    let mut transform = match camera_query.get_single_mut() {
-        Ok(single) => single,
-        Err(_) => return
-    };
+    let Ok(mut transform) =  camera_query.get_single_mut() else { return };
+    let Ok(ship) = ship_query.get_single() else { return };
 
     //set camera position to ship position.
-    transform.translation = ship_query.single().translation;
+    transform.translation = ship.translation;
 
     //set ship scale to something relative so that it scales with zoom
     //ship_query.single_mut().scale = (transform.scale + 1.0) * 3.0;
@@ -48,10 +46,7 @@ fn update_free_camera(
     mut evr_motion: EventReader<MouseMotion>,
     buttons: Res<ButtonInput<MouseButton>>
 ) {
-    let mut transform = match camera_query.get_single_mut() {
-        Ok(single) => single,
-        Err(_) => return
-    };
+    let Ok(mut transform) = camera_query.get_single_mut() else { return };
 
     let mut direction = Vec3::ZERO;
     let zoom: f32 = transform.scale.y;
@@ -94,7 +89,7 @@ fn update_cam_zoom(
     mut camera_query: Query<&mut Transform, With<Camera2d>>,
     mut evr_scroll: EventReader<MouseWheel>,
 ) {
-    let mut transform = camera_query.single_mut();
+    let Ok(mut transform) = camera_query.get_single_mut() else {return};
     let mut zoom: f32 = transform.scale.y;
 
     let scroll: f32 = evr_scroll.read().map(|ev| ev.y).sum();
