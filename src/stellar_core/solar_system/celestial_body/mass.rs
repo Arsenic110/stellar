@@ -3,6 +3,12 @@ use bevy::prelude::*;
 #[derive(Component)]
 pub struct Mass(pub f64);
 
+impl Mass {
+    fn new(mass: f64) -> Mass {
+        Mass {0: mass}
+    }
+}
+
 //impl deref so you can refer to it as *mass instead of mass.0
 impl std::ops::Deref for Mass {
     type Target = f64;

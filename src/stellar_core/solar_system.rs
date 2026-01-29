@@ -29,7 +29,7 @@ fn setup_solar_system(
 
     commands.spawn(Star::get_bundle(
         Star { radius: 1.0, spectral_type: "M".into() }, 
-        Mass {0: 10.0},
+        Mass {0: 1.0},
         Luminosity {0: 1.0},
         0.0, 
         0.0, 
