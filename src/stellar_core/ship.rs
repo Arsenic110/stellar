@@ -8,6 +8,8 @@ use core::f32::consts::PI as PI;
 use thruster::EngineFlame as EngineFlame;
 use path::ShipPath as ShipPath;
 
+use stellar_core::solar_system::Mass;
+
 pub struct ShipPlugin;
 impl Plugin for ShipPlugin {
     fn build(&self, app: &mut App) {
@@ -33,7 +35,7 @@ pub struct Ship {
 impl Ship {
     pub fn new() -> Self {
         Ship { 
-            velocity: Vec2 {x: 0.0, y: 0.1 }, 
+            velocity: Vec2 {x: 0.0, y: -15.1 }, 
             angular: 0.0,
             future_path: Vec::new()
         }
@@ -43,28 +45,28 @@ impl Ship {
 fn setup_ship(mut commands: Commands, asset_server : Res<AssetServer>) {
     //load textures
     let ship_image: Handle<Image> = asset_server.load("ship2.png");
-    let engine_flame: Handle<Image> = asset_server.load("engine_flame.png");
+    let engine_flame_image: Handle<Image> = asset_server.load("engine_flame.png");
 
     //assemble the ship entity
     let _ship = commands.spawn((
         Ship::new(),
         Sprite { image: ship_image, custom_size: Some(Vec2::splat(10.)), ..default() },
-        Transform::from_xyz(100.0, 100.0, 1.0),
+        Transform::from_xyz(1000.0, 100.0, 1.0),
     ))
     .with_child( //the engine flame is a child because it allows custom placement of the plume
-        EngineFlame::get_bundle(&engine_flame, 0, //main engine
+        EngineFlame::get_bundle(&engine_flame_image, 0, //main engine
             Transform::from_xyz(-6.0, 0.0, 0.0)
             .with_rotation(Quat::from_rotation_z(1.5 * PI))
             .with_scale(Vec3 { x: 0.8, y: 4.0, z: 1.0 })
     ))
     .with_child(
-        EngineFlame::get_bundle(&engine_flame, 1, //port 
+        EngineFlame::get_bundle(&engine_flame_image, 1, //port 
             Transform::from_xyz(2.0, 3.0, 0.0)
             .with_rotation(Quat::from_rotation_z(0.5 * PI + 0.3))
             .with_scale(Vec3 { x: 0.4, y: 0.8, z: 1.0 })
     ))
     .with_child(
-        EngineFlame::get_bundle(&engine_flame, 2, //starboard
+        EngineFlame::get_bundle(&engine_flame_image, 2, //starboard
             Transform::from_xyz(2.0, -3.0, 0.0)
             .with_rotation(Quat::from_rotation_z(0.5 * PI - 0.3))
             .with_scale(Vec3 { x: 0.4, y: 0.8, z: 1.0 })
@@ -77,17 +79,28 @@ fn setup_ship(mut commands: Commands, asset_server : Res<AssetServer>) {
 
 }
 
+fn update_ship_position(mut ship_query: Query<(&mut Ship, &mut Transform)>) {
+    let Ok((ship, mut transform)) = ship_query.get_single_mut()
+        else {return};
+
+    transform.translation = 
+        Vec3 {
+            x: transform.translation.x + ship.velocity.x, 
+            y: transform.translation.y + ship.velocity.y,
+            z: transform.translation.z,
+        };
+}
+
 //process gravity for the ship
 fn update_ship(
     mut ship_query: Query<(&mut stellar_core::ship::Ship, &mut Transform)>, 
     bodies_query: Query<(&stellar_core::solar_system::planet::Planet, &Transform), Without<stellar_core::ship::Ship>>,
-    stars_query: Query<(&stellar_core::solar_system::star::Star, &Transform), Without<stellar_core::ship::Ship>>
+    stars_query: Query<(&stellar_core::solar_system::celestial_body::Star, &Transform), Without<stellar_core::ship::Ship>>,
+    bodies: Query<(&Mass, &Transform)>
 ) {
     //unpack and error handle the tuple
-    //this pattern isnt exactly necessary but its okay
-    let Ok((mut ship, mut transform)) = ship_query.get_single_mut() else {
-        return;
-    };
+    let Ok((mut ship, mut transform)) = ship_query.get_single_mut() 
+        else {return};
 
     let mut points: Vec<Vec2> = Vec::new();
     let mut current_point = transform.translation.xy();

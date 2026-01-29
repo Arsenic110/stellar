@@ -33,7 +33,7 @@ pub fn gen_system(seed: &str) -> MTree<CelestialBody> {
         let starmass = imf(&mut rng);
         let age_gy = rng.random_range(0.0..13.8);
         let metallicity = rng.random_range(0.0..=1.3);
-        star_vec.push(Star::new(starmass, age_gy, metallicity));
+        //star_vec.push(Star::new(starmass, age_gy, metallicity));
     }
 
     let mut system_tree = match star_amount {

@@ -1,6 +1,4 @@
-#![allow(dead_code)]
-#![allow(unreachable_code)]
-//^ i found a super power clippy shutter-upper
+#![allow(dead_code, unreachable_code, unused_imports)]
 
 use bevy::prelude::*;
 use bevy_prototype_lyon::prelude::*;
@@ -38,7 +36,7 @@ fn main() {
 fn set_window_icon(windows: NonSend<bevy::winit::WinitWindows>) {
     //here we use the `image` crate to load our icon data from a png file
     //this is not a very bevy-native solution, but it will do
-    //oh btw this doesn't work on linux ofc. there we can use .desktop files to set icons
+    //Winit doesn't work on linux. there we can use .desktop files to set icons
     let (icon_rgba, icon_width, icon_height) = {
         let image = image::open("assets/icon.png")
             .expect("Failed to open icon path")

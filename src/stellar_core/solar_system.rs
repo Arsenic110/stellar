@@ -1,19 +1,16 @@
+use bevy::prelude::*;
+
 pub mod orbit;
 pub use orbit::Orbit;
 
 pub mod planet;
 pub use planet::Planet;
 
-pub mod star;
-pub use star::Star;
-
 pub mod celestial_body;
-//pub use celestial_body::CelestialBody;
+pub use celestial_body::{*, star::Luminosity};
 
 pub mod barycenter;
 pub use barycenter::Barycenter;
-
-use bevy::prelude::*;
 
 pub struct SolarSystemPlugin;
 impl Plugin for SolarSystemPlugin {
@@ -30,6 +27,14 @@ fn setup_solar_system(
     mut images: ResMut<Assets<Image>>,
 ) {
 
+    commands.spawn(Star::get_bundle(
+        Star { radius: 1.0, spectral_type: "M".into() }, 
+        Mass {0: 10.0},
+        Luminosity {0: 1.0},
+        0.0, 
+        0.0, 
+        &mut images,
+    ));
 
 
     // let system = crate::procedural_generation::gen_system::gen_system("eriku");

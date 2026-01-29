@@ -1,9 +1,10 @@
-use crate::stellar_core::solar_system::{Star, Planet, Barycenter};
+use bevy::prelude::*;
 
-#[derive(Debug)]
-pub enum CelestialBody {
-    Star(Star),
-    Planet(Planet),
-    Barycenter(Barycenter)
-}
+pub mod mass;
+pub use mass::Mass;
 
+pub mod star;
+pub use star::Star;
+
+#[derive(Component)]
+pub struct CelestialBody;

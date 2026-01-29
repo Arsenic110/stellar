@@ -1,4 +1,5 @@
 use std::f64::consts::PI;
+use bevy::prelude::*;
 pub const G: f64 = 6.6743015e-11;
 
 //N.B.: This module uses SI units.
@@ -6,6 +7,7 @@ pub const G: f64 = 6.6743015e-11;
 
 #[derive(Clone)]
 pub struct Orbit {
+    parent: Entity,
     pub apoapsis: f64,
     pub periapsis: f64,
     pub offset: f64,
@@ -13,7 +15,7 @@ pub struct Orbit {
 
 impl Default for Orbit {
     fn default() -> Self {
-        Orbit { apoapsis: 0.0, periapsis: 0.0, offset: 0.0 }
+        Orbit { parent: Entity::PLACEHOLDER, apoapsis: 0.0, periapsis: 0.0, offset: 0.0 }
     }
 }
 
@@ -34,7 +36,7 @@ impl std::fmt::Debug for Orbit {
 impl Orbit {
 
     pub fn new(apoapsis: f64, periapsis: f64, offset: f64) -> Orbit {
-        Orbit { apoapsis, periapsis, offset }
+        Orbit { parent: Entity::PLACEHOLDER, apoapsis, periapsis, offset }
     }
     pub fn semi_major_axis(self: &Self) -> f64 {
         (self.apoapsis + self.periapsis) / 2.0

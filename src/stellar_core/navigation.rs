@@ -1,8 +1,9 @@
 use core::f64;
+use std::f64::consts::PI;
 
 use bevy::prelude::*;
-use super::solar_system::star::Star;
-use super::solar_system::planet::Planet;
+use super::solar_system::celestial_body::Star;
+use super::solar_system::Mass;
 use crate::stellar_utils::unit_conversion::*;
 
 pub const G: f64 = 6.6743015e-11;
@@ -10,7 +11,7 @@ const SOL_MASS: f64 = 2e14;
 
 //calculate the total acceleration at a given position from a vec of celestial bodies.
 pub fn calculate_acceleration(
-    position: &Vec2, bodies: &Vec<(&Planet, &bevy::prelude::Transform)>, 
+    position: &Vec2, bodies: &Vec<(&Mass, &bevy::prelude::Transform)>, 
     stars: &Vec<(&Star, &bevy::prelude::Transform)>
 ) -> Vec2 {
 
@@ -18,20 +19,12 @@ pub fn calculate_acceleration(
     let mut accel = Vec2::new(0.0,0.0);
 
     //iterate through each body, adding the acceleration together.
-    for body in bodies {
+    for (mass, transform) in bodies {
         accel += acceleration(
-            &body.1.translation.xy(), 
+            &transform.translation.xy(), 
             position, 
-            earths(body.0.mass) as f64, 
-            0.5 * body.0.radius as f64);
-    }
-
-    for star in stars {
-        accel += acceleration(
-            &star.1.translation.xy(), 
-            position, 
-            earths(star.0.mass) as f64, 
-            2.5 * star.0.radius as f64)
+            ***mass, 
+            f64::powf((3.0 * ***mass) / (4.0 * PI * 2000.0), 1.0 / 3.0) );
     }
 
     accel

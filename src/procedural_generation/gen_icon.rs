@@ -42,7 +42,7 @@ pub fn render_icon(planet: &Planet, size: u32) -> ImageBuffer<Rgba<u8>, Vec<u8>>
     let perlin = Perlin::new(rng().next_u32());
 
     //normalize values
-    let mass_n     = normalize(planet.mass, 0.00, 10.0);
+    let _mass_n     = normalize(planet.mass, 0.00, 10.0);
     let dens_n     = normalize(planet.density, 2000.0, 8000.0);
     let temp_n     = normalize(planet.surface_temperature, 50.0, 400.0);
     let atm_n      = normalize(planet.atmos_pressure, 0.0, 10.0);

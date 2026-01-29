@@ -1,7 +1,7 @@
 use crate::stellar_core::solar_system::Orbit;
-use crate::stellar_core::solar_system::Star;
+use crate::stellar_core::solar_system::celestial_body::Star;
 
-pub fn generate_star(solar_mass: f64, age_gy: f64, metallicity: f64) -> Star
+pub fn generate_star(solar_mass: f64, age_gy: f64, metallicity: f64) -> StarData
 {
     let lifespan = 10.0 / solar_mass.powf(2.5);
 
@@ -16,7 +16,7 @@ pub fn generate_star(solar_mass: f64, age_gy: f64, metallicity: f64) -> Star
         _ => get_main_sequence_properties(solar_mass, age_gy, metallicity) //lol idk, fallback?
     };
 
-    Star { mass: solar_mass, radius, luminosity, temperature, lifespan, spectral_type, orbit: Orbit::default() }
+    StarData { mass: solar_mass, radius, luminosity, temperature, lifespan, spectral_type }
 }
 
 fn get_protostar_properties(mass: f64, _age_gy: f64, metallicity: f64) -> (f64, f64, f64, f64, String) {
@@ -161,4 +161,13 @@ fn get_remnant_properties(mass: f64, _age_gy: f64, _metallicity: f64) -> (f64, f
 
     return (radius, luminosity, temperature, lifespan, spectral_type.to_string());
 
+}
+
+pub struct StarData {
+    pub mass: f64,
+    pub radius: f64,
+    pub luminosity: f64,
+    pub temperature: f64,
+    pub lifespan: f64,
+    pub spectral_type: String,
 }

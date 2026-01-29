@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::stellar_core::solar_system::Orbit;
 
-use crate::procedural_generation::{self, gen_planet as gen};
+use crate::procedural_generation;
 
 #[derive(Clone, Component)]
 pub struct Planet {
@@ -51,10 +51,6 @@ impl std::fmt::Debug for Planet {
 }
 
 impl Planet {
-    pub fn new(earth_mass: f64, density: f64, solar_flux: f64, magnetic_field: f64, orbit: Orbit) -> Planet {
-        gen::generate_planet(earth_mass, density, solar_flux, magnetic_field, orbit)
-    }
-
     pub fn get_bundle(
         planet: Self, x: f32, y: f32, images: &mut ResMut<Assets<Image>>
     ) -> (Self, Sprite, Transform) {
@@ -62,10 +58,7 @@ impl Planet {
         let tex_size = (radius as u32 / 100).max(1);
 
         let sprite = Sprite {
-            image: procedural_generation::gen_icon::image_to_handle(
-                procedural_generation::gen_icon::render_icon(&planet, tex_size), 
-                images
-            ),
+            image: procedural_generation::gen_icon::circle_texture(tex_size, tex_size, images, 255, 200, 0, 255),
             custom_size: Some(Vec2::splat(radius as f32)),
             ..default()
         };

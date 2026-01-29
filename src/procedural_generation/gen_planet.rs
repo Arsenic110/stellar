@@ -25,7 +25,7 @@ pub const G: f64 = 6.6743015e-11;
 
 
 pub fn generate_planet(earth_mass: f64, density: f64, solar_flux: f64, magnetic_field: f64,
-    orbit: Orbit) -> Planet {
+    _orbit: Orbit) -> PlanetData {
 
     //in meters
     let radius = f64::powf((3.0 * earth_mass * EARTH_MASS) / (4.0 * core::f64::consts::PI * density), 1.0 / 3.0);
@@ -112,7 +112,7 @@ pub fn generate_planet(earth_mass: f64, density: f64, solar_flux: f64, magnetic_
         _ => "rocky with metallic core",
     };
 
-    let p = Planet { 
+    let p = PlanetData { 
         mass: earth_mass, 
         density: density, 
         radius: radius / 1000.0, 
@@ -123,7 +123,6 @@ pub fn generate_planet(earth_mass: f64, density: f64, solar_flux: f64, magnetic_
         magnetic_field_strength: magnetic_field, 
         tectonic_activity: tectonic_activity.1.to_string(), 
         habitability: habitability,
-        orbit
     };
 
     p
@@ -133,4 +132,17 @@ fn normalize(value: f64, min: f64, max: f64) -> f64 {
     //clamp to 0–1
     let v = (value - min).max(0.0).min(max - min);
     v / (max - min)
+}
+
+pub struct PlanetData {
+    pub mass: f64,
+    pub density: f64,
+    pub radius: f64,
+    pub surface_gravity: f64,
+    pub atmos_pressure: f64,
+    pub surface_temperature: f64,
+    pub atmosphere_composition: Vec<(String, f64)>,
+    pub magnetic_field_strength: f64,
+    pub tectonic_activity: String,
+    pub habitability: f64,
 }
