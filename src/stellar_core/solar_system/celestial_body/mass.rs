@@ -4,7 +4,7 @@ use bevy::prelude::*;
 pub struct Mass(pub f64);
 
 impl Mass {
-    fn new(mass: f64) -> Mass {
+    pub fn new(mass: f64) -> Mass {
         Mass {0: mass}
     }
 }
