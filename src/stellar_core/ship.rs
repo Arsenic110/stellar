@@ -8,7 +8,7 @@ use core::f32::consts::PI as PI;
 use thruster::EngineFlame as EngineFlame;
 use path::ShipPath as ShipPath;
 
-use stellar_core::solar_system::Mass;
+use stellar_core::solar_system::*;
 
 pub struct ShipPlugin;
 impl Plugin for ShipPlugin {
@@ -19,7 +19,7 @@ impl Plugin for ShipPlugin {
                 ShipPath,
             ))
             .add_systems(Startup, setup_ship)
-            .add_systems(Update, update_ship)
+            .add_systems(Update, update_ship_gravity)
             .add_systems(Update, ship_controls)
             ;
     }
@@ -35,7 +35,7 @@ pub struct Ship {
 impl Ship {
     pub fn new() -> Self {
         Ship { 
-            velocity: Vec2 {x: 0.0, y: -15.1 }, 
+            velocity: Vec2 {x: 0.0, y: -5.1 }, 
             angular: 0.0,
             future_path: Vec::new()
         }
@@ -91,12 +91,9 @@ fn update_ship_position(mut ship_query: Query<(&mut Ship, &mut Transform)>) {
         };
 }
 
-//process gravity for the ship
-fn update_ship(
+fn update_ship_gravity(
     mut ship_query: Query<(&mut stellar_core::ship::Ship, &mut Transform)>, 
-    bodies_query: Query<(&stellar_core::solar_system::planet::Planet, &Transform), Without<stellar_core::ship::Ship>>,
-    stars_query: Query<(&stellar_core::solar_system::celestial_body::Star, &Transform), Without<stellar_core::ship::Ship>>,
-    bodies: Query<(&Mass, &Transform)>
+    bodies: Query<(&Mass, &Radius, &Transform), Without<Ship>>
 ) {
     //unpack and error handle the tuple
     let Ok((mut ship, mut transform)) = ship_query.get_single_mut() 
@@ -112,8 +109,7 @@ fn update_ship(
         // Calculate the new velocity based on gravitational attraction
         let new_velocity = 
             stellar_core::navigation::calculate_acceleration(
-                &current_point, &bodies_query.iter().collect(), &stars_query.iter().collect()
-            )
+                &current_point, &bodies.iter().collect())
             + current_velocity; // Add it to the current velocity
 
         //on the first run, update the ship values.
@@ -141,7 +137,8 @@ fn ship_controls(
     mut engines: Query<&mut EngineFlame, Without<Ship>>,
     q_windows: Query<&Window, With<bevy::window::PrimaryWindow>>
 ) {
-    let Ok((mut ship, transform)) = ship_query.get_single_mut() else { return };
+    let Ok((mut ship, transform)) = 
+        ship_query.get_single_mut() else { return };
     let Ok(window) = q_windows.get_single() else { return };
 
     let mut button_pressed = false;
@@ -159,12 +156,12 @@ fn ship_controls(
         toggle_engine(2, true);
 
         ship.angular *= 0.95;
-        ship.velocity *= 0.95;
+        ship.velocity *= 0.97;
     }
 
     if mouse_buttons.pressed(MouseButton::Left) {
 
-        //unpack this 'safely' incase user does something like click then drag mouse outside of the window.
+        //in case user does something like click then drag mouse outside of the window.
         let Some(cursor_pos) = window.cursor_position() else { return };
 
         toggle_engine(0, true);
@@ -175,18 +172,18 @@ fn ship_controls(
         let velocity_modifier = Vec2 { 
             x: (world_pos.x - transform.translation.x), 
             y: -(world_pos.y - transform.translation.y) 
-        } / 1.0e3;
+        } / 2.0e3;
 
         ship.velocity += velocity_modifier;
 
         if ship.velocity.length_squared() > 0.0 {
             let nrm = velocity_modifier.normalize();
-            let target_angle = nrm.y.atan2(nrm.x); // x and y swapped for standard atan2
+            let target_angle = nrm.y.atan2(nrm.x); //x and y swapped for standard atan2
         
-            // Extract the current angle from the transform's rotation
+            //get the current angle from the transform's rotation
             let current_angle = transform.rotation.to_euler(EulerRot::XYZ).2;
         
-            // Compute shortest angle difference
+            //shortest angle difference
             let mut angle_diff = target_angle - current_angle;
 
             if angle_diff > PI {
@@ -196,7 +193,7 @@ fn ship_controls(
                 angle_diff += 2.0 * PI;
             }
         
-            // Apply damped turning speed
+            //apply damped turning speed
             ship.angular = angle_diff * 0.1;
         }
     }
