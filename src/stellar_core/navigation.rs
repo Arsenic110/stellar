@@ -11,47 +11,51 @@ const SOL_MASS: f64 = 2e24;
 
 //calculate the total acceleration at a given position from a vec of celestial bodies.
 pub fn calculate_acceleration(
-    position: &Vec2, bodies: &Vec<(&Mass, &Radius, &bevy::prelude::Transform)>
+    position: &Vec2, bodies: &Vec<(&CelestialBody, &bevy::prelude::Transform)>
 ) -> Vec2 {
 
     //start with zero accel
     let mut accel = Vec2::new(0.0,0.0);
 
     //iterate through each body, adding the acceleration together.
-    for (mass, radius, transform) in bodies {
+    for (celestial_body, transform) in bodies {
+        let mass = celestial_body.mass;
+        let radius = celestial_body.radius;
+
         accel += acceleration(
             &transform.translation.xy(), 
             position, 
-            &***mass, 
-            &***radius
-            );
+            mass, 
+            radius
+        );
     }
 
     accel
 }
 
 //modified newton's. Ignores mass of one of the objects, and adds a repulsive force when close by
-pub fn acceleration(pos1: &Vec2, pos2: &Vec2, mass: &f64, radius: &f64) -> Vec2 {
+pub fn acceleration(pos1: &Vec2, pos2: &Vec2, mass: f64, radius: f64) -> Vec2 {
     let delta_pos = pos1 - pos2;
     let mass = mass * 1e13;
 
     //true distance is split into two calculations since we want to check for zero
     let distance_squared = delta_pos.length_squared() as f64;
-    if distance_squared == 0.0 { 
-        return Vec2::splat(0.0); //avoid division by zero
-    }
 
-    let distance = distance_squared.sqrt() as f64;
+    let distance = match distance_squared {
+        0.0 => { return Vec2::splat(0.0) }, //avoid division by zero
+        _ => distance_squared.sqrt() as f64
+    };
 
     //calculate magnitude + repulsive force calculation
     let soft = radius * 50.0;
-    let acceleration_magnitude = G * mass * (distance_squared - soft * soft) / (distance_squared * distance_squared);
+    let acceleration_magnitude = 
+        G * mass * (distance_squared - soft * soft) / (distance_squared * distance_squared);
 
     let direction = delta_pos / distance as f32;
     //cap it to at minimum -0.1
     let acceleration = direction * f64::max(-19.1, acceleration_magnitude) as f32;
 
-    return acceleration;
+    acceleration
 }
 
 fn radius_from_mass(mass: f64, density: f64) -> f64 {

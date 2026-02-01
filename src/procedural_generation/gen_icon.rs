@@ -5,7 +5,7 @@ use noise::{NoiseFn, Perlin};
 use palette::{rgb::Rgb, Srgb};
 use rand::{rng, RngCore};
 
-use crate::stellar_core::solar_system::Planet;
+use crate::procedural_generation::gen_planet::PlanetData;
 
 fn normalize(value: f64, min: f64, max: f64) -> f64 {
     (value - min).max(0.0).min(max - min) / (max - min)
@@ -34,11 +34,11 @@ fn palette(c: usize) -> Srgb<u8> {
     p[c]
 }
 
-pub fn render_and_write_icon(planet: &Planet, size: u32, path: &std::path::Path) {
+pub fn render_and_write_icon(planet: &PlanetData, size: u32, path: &std::path::Path) {
     write_icon(&render_icon(planet, size), path); 
 }
 
-pub fn render_icon(planet: &Planet, size: u32) -> ImageBuffer<Rgba<u8>, Vec<u8>> {
+pub fn render_icon(planet: &PlanetData, size: u32) -> ImageBuffer<Rgba<u8>, Vec<u8>> {
     let perlin = Perlin::new(rng().next_u32());
 
     //normalize values

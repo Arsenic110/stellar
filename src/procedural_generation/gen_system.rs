@@ -2,19 +2,21 @@ use rand::{rngs::SmallRng, SeedableRng, Rng};
 use sha2::{Sha256, Digest};
 use std::f64::consts::E;
 
+use crate::procedural_generation::gen_star::generate_star;
 use crate::stellar_core::solar_system::{
-    Star,
-    Planet,
     CelestialBody, 
     Barycenter
 };
+
+use super::gen_planet::PlanetData;
+use super::gen_star::StarData;
 
 use crate::stellar_utils::unit_conversion::*;
 
 use crate::stellar_core::solar_system::Orbit;
 use crate::stellar_utils::MTree;
 
-pub fn gen_system(seed: &str) -> MTree<CelestialBody> {
+pub fn gen_system(seed: &str) -> MTree<GeneratorData> {
     //init our rng from the seed
     let mut rng: SmallRng = random_gen_from_string(seed);
 
@@ -26,26 +28,27 @@ pub fn gen_system(seed: &str) -> MTree<CelestialBody> {
         _ => 5
     };
 
+    //debug set to one
     let star_amount = 1;
 
-    let mut star_vec: Vec<Star> = vec![];
+    let mut star_vec: Vec<StarData> = vec![];
     for _ in 0..star_amount {
         let starmass = imf(&mut rng);
         let age_gy = rng.random_range(0.0..13.8);
         let metallicity = rng.random_range(0.0..=1.3);
-        //star_vec.push(Star::new(starmass, age_gy, metallicity));
+        star_vec.push(
+            generate_star(starmass, age_gy, metallicity)
+        );
     }
 
-    let mut system_tree = match star_amount {
-        1 => MTree::new(CelestialBody::Star(star_vec.pop().unwrap())),
-        _ => MTree::new(CelestialBody::Barycenter(Barycenter::default()))
-    };
-
     //todo: add binary barycenter logic here
+    let mut system_tree = 
+        MTree::new(GeneratorData::StarData(star_vec.pop().unwrap()));
 
     //this is the root barycenter of the entire system.
     let mut system_root = system_tree.root_handle();
 
+    //use imf function to generate a starmass
     let starmass = imf(&mut rng);
 
     //the planetary system mass pool
@@ -79,13 +82,20 @@ pub fn gen_system(seed: &str) -> MTree<CelestialBody> {
             rng.random_range(0.0..1.0));
 
         let mut planet_system = MTree::new(
-            CelestialBody::Planet(Planet::new(
-            to_earth(planet_mass / 1.0),
-            rng.random_range(800.0..8000.0),
-            solar_flux_function(current_distance, system_size) * 1.0,
-            rng.random_range(0.0..1.0),
-            orbit
-        )));
+            GeneratorData::PlanetData(
+                PlanetData {
+                    mass: to_earth(planet_mass / 1.0),
+                    density: rng.random_range(800.0..8000.0),
+                    radius: rng.random_range(800.0..8000.0),
+                    surface_gravity: 1.0,
+                    surface_temperature: solar_flux_function(current_distance, system_size) * 1.0,
+                    habitability: rng.random_range(0.0..1.0),
+                    atmos_pressure: 1.0,
+                    orbit,
+                    atmosphere_composition: vec![("meow".into(), 1.0)],
+                    magnetic_field_strength: 1.0,
+                    tectonic_activity: "yea".into()
+                }));
 
         let moon_amount = (rng.random_range(0.0..=to_earth(planet_mass)) * 10.0).trunc() as u32;
 
@@ -95,12 +105,12 @@ pub fn gen_system(seed: &str) -> MTree<CelestialBody> {
 
             let root_val = planet_system.root_handle();
             let root_planet = match root_val.value() {
-                CelestialBody::Planet(planet) => planet,
+                GeneratorData::PlanetData(planet) => planet,
                 _ => panic!()
             };
             
             let root_star = match system_root.value() {
-                CelestialBody::Star(star) => star,
+                GeneratorData::StarData(star) => star,
                 _ => panic!()
             };
 
@@ -121,13 +131,20 @@ pub fn gen_system(seed: &str) -> MTree<CelestialBody> {
                 rng.random_range(0.0..1.0));
 
             planet_system.append(0,
-                CelestialBody::Planet(Planet::new(
-                to_earth(moon_mass),
-                moon_density,
-                solar_flux_function(current_distance, system_size) * 1.0,
-                rng.random_range(0.0..0.1),
-                moon_orbit
-            )));
+                GeneratorData::PlanetData(
+                PlanetData {
+                    mass: to_earth(planet_mass / 1.0),
+                    density: rng.random_range(800.0..8000.0),
+                    radius: rng.random_range(800.0..8000.0),
+                    surface_gravity: 1.0,
+                    surface_temperature: solar_flux_function(current_distance, system_size) * 1.0,
+                    habitability: rng.random_range(0.0..1.0),
+                    atmos_pressure: 1.0,
+                    orbit: moon_orbit,
+                    atmosphere_composition: vec![("meow".into(), 1.0)],
+                    magnetic_field_strength: 1.0,
+                    tectonic_activity: "yea".into()
+                }));
         }
 
         system_root.merge(planet_system);
@@ -276,4 +293,10 @@ fn hill_radius(star_mass: f64, planet_mass: f64, semi_major: f64) -> f64 {
 fn max_moon_orbit<R: Rng>(rng: &mut R, star_mass: f64, planet_mass: f64, semi_major: f64) -> f64 {
     let hill = hill_radius(star_mass, planet_mass, semi_major);
     hill * rng.random_range(0.05..0.5)
+}
+
+pub enum GeneratorData {
+    StarData(StarData),
+    PlanetData(PlanetData),
+    Barycenter(Barycenter)
 }

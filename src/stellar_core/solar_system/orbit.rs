@@ -3,7 +3,7 @@ use bevy::prelude::*;
 pub const G: f64 = 6.6743015e-11;
 
 //N.B.: This module uses SI units.
-//Make sure that distances should be in meters, masses in kilograms, and periods in seconds.
+//Make sure that distances are in meters, masses in kilograms, periods in seconds, and angles in radians.
 
 #[derive(Clone)]
 pub struct Orbit {

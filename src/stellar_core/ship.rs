@@ -95,7 +95,7 @@ fn update_ship_position(mut ship_query: Query<(&mut Ship, &mut Transform)>) {
 
 fn update_ship_gravity(
     mut ship_query: Query<(&mut stellar_core::ship::Ship, &mut Transform)>, 
-    bodies: Query<(&Mass, &Radius, &Transform), Without<Ship>>
+    bodies: Query<(&CelestialBody, &Transform), Without<Ship>>
 ) {
     //unpack and error handle the tuple
     let Ok((mut ship, mut transform)) = ship_query.get_single_mut() 

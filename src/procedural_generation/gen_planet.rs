@@ -123,6 +123,7 @@ pub fn generate_planet(earth_mass: f64, density: f64, solar_flux: f64, magnetic_
         magnetic_field_strength: magnetic_field, 
         tectonic_activity: tectonic_activity.1.to_string(), 
         habitability: habitability,
+        orbit: Orbit::default()
     };
 
     p
@@ -145,4 +146,5 @@ pub struct PlanetData {
     pub magnetic_field_strength: f64,
     pub tectonic_activity: String,
     pub habitability: f64,
+    pub orbit: Orbit,
 }
