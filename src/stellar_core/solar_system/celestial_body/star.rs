@@ -3,10 +3,8 @@ use bevy::prelude::*;
 pub mod luminosity;
 pub use luminosity::Luminosity;
 
-use super::{Mass, Radius};
-
-use crate::stellar_core::solar_system::Orbit;
-use crate::procedural_generation::{self, gen_star as gen};
+use super::CelestialBody;
+use crate::procedural_generation::gen_icon::circle_texture as circle_texture;
 
 #[derive(Clone, Component)]
 pub struct Star {
@@ -16,22 +14,21 @@ pub struct Star {
 impl Star {
     pub fn get_bundle(
         star: Self, 
-        mass: Mass, 
-        radius: Radius, 
+        mass: f64, 
+        radius: f64, 
         luminosity: Luminosity, 
         x: f32, y: f32, 
         mut images: &mut ResMut<Assets<Image>>, 
-) -> (Self, Mass, Radius, Luminosity, Sprite, Transform) {
-        let tex_size = (*radius as u32 * 10).max(32);
-        let custom_size = Vec2::splat((*radius as f32 * 100.0).max(1000.0));
+) -> (CelestialBody, Self, Luminosity, Sprite, Transform) {
+        let tex_size = (radius as u32 * 10).max(32);
+        let custom_size = Vec2::splat((radius as f32 * 100.0).max(1000.0));
 
         (
+            CelestialBody { name: "root".into(), mass, radius },
             star,
-            mass,
-            radius,
             luminosity,
             Sprite { 
-                image: procedural_generation::gen_icon::circle_texture(
+                image: circle_texture(
                     tex_size, tex_size, &mut images,
                     255, 225, 30, 255
                 ),
