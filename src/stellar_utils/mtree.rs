@@ -4,7 +4,7 @@ use serde::Serialize;
 type Id = u32;
 
 #[derive(Debug)]
-pub struct MTree<T> where T: std::fmt::Debug {
+pub struct MTree<T> {
     node_map: HashMap<Id, (Node, T)>,
     first_id: Id,
     last_id: Id,
@@ -18,18 +18,18 @@ struct Node {
 
 ///Wrapper struct representing a handle to a particular node inside the MTree<T>.
 #[derive(Debug)]
-pub struct NodeHandle<'a, T> where T: std::fmt::Debug {
+pub struct NodeHandle<'a, T> {
     tree: &'a mut MTree<T>,
     id: Id,
 }
 
 ///Wrapper struct for an iterator over the MTree<T>.
-pub struct MTreeIter<'a, T> where T: std::fmt::Debug {
+pub struct MTreeIter<'a, T> {
     tree: &'a MTree<T>,
     stack: Vec<Id>
 }
 
-pub struct MTreeIterMut<'a, T> where T: std::fmt::Debug {
+pub struct MTreeIterMut<'a, T> {
     tree: &'a mut MTree<T>,
     stack: Vec<Id>
 }
@@ -41,7 +41,7 @@ pub enum NodeError {
     NotFound(Id),
 }
 
-impl<T> MTree<T> where T: std::fmt::Debug {
+impl<T> MTree<T> {
 
     ///Creates a new MTree.
     pub fn new(root_value: T) -> Self {
@@ -126,7 +126,7 @@ impl<T> MTree<T> where T: std::fmt::Debug {
             Some(x) => x,
             None => return //can just return here and move on to the next child
         };
-        println!("{}{:?} ({})", " | ".repeat(depth), value, node_id);
+        //println!("{}{:?} ({})", " | ".repeat(depth), value, node_id);
         for &child in &node.children {
             self.print_node(child, depth + 1);
         }
@@ -163,7 +163,7 @@ impl<T> MTree<T> where T: std::fmt::Debug {
 
 }
 
-impl<'a, T> IntoIterator for &'a MTree<T> where T: std::fmt::Debug {
+impl<'a, T> IntoIterator for &'a MTree<T> {
     type Item = &'a T;
     type IntoIter = MTreeIter<'a, T>;
 
@@ -172,7 +172,7 @@ impl<'a, T> IntoIterator for &'a MTree<T> where T: std::fmt::Debug {
     }
 }
 
-impl<'a, T> IntoIterator for &'a mut MTree<T> where T: std::fmt::Debug {
+impl<'a, T> IntoIterator for &'a mut MTree<T> {
     type Item = &'a mut T;
     type IntoIter = MTreeIterMut<'a, T>;
 
@@ -181,7 +181,7 @@ impl<'a, T> IntoIterator for &'a mut MTree<T> where T: std::fmt::Debug {
     }
 }
 
-impl<'a, T> NodeHandle<'a, T> where T: std::fmt::Debug {
+impl<'a, T> NodeHandle<'a, T> {
 
     pub fn append(&mut self, value: T) -> NodeHandle<'_, T> {
 
@@ -253,7 +253,7 @@ impl<'a, T> NodeHandle<'a, T> where T: std::fmt::Debug {
     }
 }
 
-impl<'a, T> MTreeIter<'a, T> where T:std::fmt::Debug {
+impl<'a, T> MTreeIter<'a, T> {
     fn new(tree: &'a MTree<T>) -> Self {
         Self {
             stack: vec![tree.first_id],
@@ -262,7 +262,7 @@ impl<'a, T> MTreeIter<'a, T> where T:std::fmt::Debug {
     }
 }
 
-impl<'a, T> MTreeIterMut<'a, T> where T:std::fmt::Debug {
+impl<'a, T> MTreeIterMut<'a, T> {
     fn new(tree: &'a mut MTree<T>) -> Self {
         Self {
             stack: vec![tree.first_id],
@@ -271,7 +271,7 @@ impl<'a, T> MTreeIterMut<'a, T> where T:std::fmt::Debug {
     }
 }
 
-impl<'a, T> Iterator for MTreeIter<'a, T> where T: std::fmt::Debug {
+impl<'a, T> Iterator for MTreeIter<'a, T> {
     type Item = &'a T;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -285,7 +285,7 @@ impl<'a, T> Iterator for MTreeIter<'a, T> where T: std::fmt::Debug {
     }
 }
 
-impl<'a, T> Iterator for MTreeIterMut<'a, T> where T: std::fmt::Debug {
+impl<'a, T> Iterator for MTreeIterMut<'a, T> {
     type Item = &'a mut T;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -305,7 +305,7 @@ impl<'a, T> Iterator for MTreeIterMut<'a, T> where T: std::fmt::Debug {
 }
 
 ///Serialize a tree
-impl<T> Serialize for MTree<T> where T: std::fmt::Debug {
+impl<T> Serialize for MTree<T> {
     fn serialize<S>(&self, _serializer: S) -> Result<S::Ok, S::Error>
         where
             S: serde::Serializer {
