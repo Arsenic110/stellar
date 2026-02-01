@@ -122,11 +122,11 @@ impl<T> MTree<T> {
 
     ///Helper function to print a node and its children.
     fn print_node(&self, node_id: Id, depth: usize) {
-        let (node, value) = match self.get(node_id) {
+        let (node, _value) = match self.get(node_id) {
             Some(x) => x,
             None => return //can just return here and move on to the next child
         };
-        //println!("{}{:?} ({})", " | ".repeat(depth), value, node_id);
+        //println!("{}{:?} ({})", " | ".repeat(depth), _value, node_id);
         for &child in &node.children {
             self.print_node(child, depth + 1);
         }
