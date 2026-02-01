@@ -30,6 +30,7 @@ pub struct Ship {
     pub velocity: Vec2,
     pub angular: f32,
     pub future_path: Vec<Vec2>,
+    pub engine_speed: f32,
 }
 
 impl Ship {
@@ -37,7 +38,8 @@ impl Ship {
         Ship { 
             velocity: Vec2 {x: 0.0, y: -5.1 }, 
             angular: 0.0,
-            future_path: Vec::new()
+            future_path: Vec::new(),
+            engine_speed: 2.0
         }
     }
 }
@@ -137,11 +139,17 @@ fn ship_controls(
     mut engines: Query<&mut EngineFlame, Without<Ship>>,
     q_windows: Query<&Window, With<bevy::window::PrimaryWindow>>
 ) {
+
+    //extract ship, transform, and window from queries
     let Ok((mut ship, transform)) = 
         ship_query.get_single_mut() else { return };
-    let Ok(window) = q_windows.get_single() else { return };
 
+    let Ok(window) = 
+        q_windows.get_single() else { return };
+
+    //set up the button press tracker
     let mut button_pressed = false;
+    //shorthand closure for engine animation
     let mut toggle_engine = |id: i32, state| {
         button_pressed = true;
         for mut e in engines.iter_mut() {
@@ -151,74 +159,91 @@ fn ship_controls(
         }
     };
 
+    //ship control and stopping
     if mouse_buttons.pressed(MouseButton::Right) {
         toggle_engine(1, true);
         toggle_engine(2, true);
 
         ship.angular *= 0.95;
-        ship.velocity *= 0.97;
+        ship.velocity *= 0.95;
     }
 
+    let mut point_vector = ship.velocity;
+
+    //ship control
     if mouse_buttons.pressed(MouseButton::Left) {
 
         //in case user does something like click then drag mouse outside of the window.
         let Some(cursor_pos) = window.cursor_position() else { return };
 
-        toggle_engine(0, true);
-
-        let world_pos = 
+        //convert screenspace position to worldspace, in relation to the ship
+        let cursor_world_pos = 
             transform.translation.xy() + cursor_pos - window.size() / 2.0;
 
         let velocity_modifier = Vec2 { 
-            x: (world_pos.x - transform.translation.x), 
-            y: -(world_pos.y - transform.translation.y) 
-        } / 2.0e3;
+            x: (cursor_world_pos.x - transform.translation.x), 
+            y: -(cursor_world_pos.y - transform.translation.y) 
+        } / 5.0e3;
 
-        ship.velocity += velocity_modifier;
+        //engine speed for later upgrading
+        let engine_speed = ship.engine_speed;
+        ship.velocity += velocity_modifier * engine_speed;
 
-        if ship.velocity.length_squared() > 0.0 {
-            let nrm = velocity_modifier.normalize();
-            let target_angle = nrm.y.atan2(nrm.x); //x and y swapped for standard atan2
-        
-            //get the current angle from the transform's rotation
-            let current_angle = transform.rotation.to_euler(EulerRot::XYZ).2;
-        
-            //shortest angle difference
-            let mut angle_diff = target_angle - current_angle;
+        point_vector = velocity_modifier;
 
-            if angle_diff > PI {
-                angle_diff -= 2.0 * PI;
-            } 
-            else if angle_diff < -PI {
-                angle_diff += 2.0 * PI;
-            }
-        
-            //apply damped turning speed
-            ship.angular = angle_diff * 0.1;
-        }
+        toggle_engine(0, true);
     }
 
+    //check for movement
+    if ship.velocity.length_squared() > 0.0 {
+        //normalize the direction vector
+        let nrm = point_vector.normalize();
+        //convert it to an angle in radians
+        let target_angle = nrm.y.atan2(nrm.x); //x and y swapped for standard atan2
+    
+        //get the current angle from the transform's rotation
+        let current_angle = transform.rotation.to_euler(EulerRot::XYZ).2;
+    
+        //shortest angle difference
+        let mut angle_diff = target_angle - current_angle;
+
+        //clamp it to a range of [-pi, pi]
+        if angle_diff > PI {
+            angle_diff -= 2.0 * PI;
+        } 
+        else if angle_diff < -PI {
+            angle_diff += 2.0 * PI;
+        }
+    
+        //apply damped turning speed
+        ship.angular = angle_diff * 0.1;
+    }
+
+    //debug coordinate dump
     if mouse_buttons.just_pressed(MouseButton::Middle) {
         dbg!(transform.translation);
     }
 
+    //rotate left
     if keyboard.pressed(KeyCode::KeyQ) {
         ship.angular += 0.002;
 
         toggle_engine(1, true);
     }
 
+    //rotate right
     if keyboard.pressed(KeyCode::KeyE) {
         ship.angular -= 0.002;
 
         toggle_engine(2, true);
     }
 
+    //if no buttons were pressed, stop engines
     if !button_pressed {
         for mut e in engines.iter_mut() {
                 e.active = false;
         }
     }
 
-
 }
+
