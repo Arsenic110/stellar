@@ -1,5 +1,4 @@
 use bevy::prelude::*;
-use crate::stellar_core;
 
 mod thruster;
 mod path;
@@ -8,7 +7,7 @@ use core::f32::consts::PI as PI;
 use thruster::EngineFlame as EngineFlame;
 use path::ShipPath as ShipPath;
 
-use stellar_core::solar_system::*;
+use crate::stellar_core::solar_system::*;
 
 pub struct ShipPlugin;
 impl Plugin for ShipPlugin {
@@ -94,7 +93,7 @@ fn update_ship_position(mut ship_query: Query<(&mut Ship, &mut Transform)>) {
 }
 
 fn update_ship_gravity(
-    mut ship_query: Query<(&mut stellar_core::ship::Ship, &mut Transform)>, 
+    mut ship_query: Query<(&mut Ship, &mut Transform)>, 
     bodies: Query<(&CelestialBody, &Transform), Without<Ship>>
 ) {
     //unpack and error handle the tuple
@@ -110,7 +109,7 @@ fn update_ship_gravity(
     for i in 0..path_length {
         // Calculate the new velocity based on gravitational attraction
         let new_velocity = 
-            stellar_core::navigation::calculate_acceleration(
+            crate::stellar_core::navigation::calculate_acceleration(
                 &current_point, &bodies.iter().collect())
             + current_velocity; // Add it to the current velocity
 

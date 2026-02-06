@@ -5,7 +5,7 @@ use noise::{NoiseFn, Perlin};
 use palette::{rgb::Rgb, Srgb};
 use rand::{rng, RngCore};
 
-use crate::procedural_generation::gen_planet::PlanetData;
+use crate::procedural_generation::data::PlanetData;
 
 fn normalize(value: f64, min: f64, max: f64) -> f64 {
     (value - min).max(0.0).min(max - min) / (max - min)

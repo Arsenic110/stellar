@@ -4,12 +4,11 @@ use std::f64::consts::E;
 
 use crate::procedural_generation::gen_star::generate_star;
 use crate::stellar_core::solar_system::{
-    CelestialBody, 
+    celestial_body::CelestialBody, 
     Barycenter
 };
 
-use super::gen_planet::PlanetData;
-use super::gen_star::StarData;
+use super::data::{StarData, PlanetData, GeneratorData};
 
 use crate::stellar_utils::unit_conversion::*;
 
@@ -17,7 +16,7 @@ use crate::stellar_core::solar_system::Orbit;
 use crate::stellar_utils::MTree;
 
 pub fn gen_system(seed: &str) -> MTree<GeneratorData> {
-    //init our rng from the seed
+    //init rng from the seed
     let mut rng: SmallRng = random_gen_from_string(seed);
 
     let _star_amount = match rng.random_range(0..=100) {
@@ -293,10 +292,4 @@ fn hill_radius(star_mass: f64, planet_mass: f64, semi_major: f64) -> f64 {
 fn max_moon_orbit<R: Rng>(rng: &mut R, star_mass: f64, planet_mass: f64, semi_major: f64) -> f64 {
     let hill = hill_radius(star_mass, planet_mass, semi_major);
     hill * rng.random_range(0.05..0.5)
-}
-
-pub enum GeneratorData {
-    StarData(StarData),
-    PlanetData(PlanetData),
-    Barycenter(Barycenter)
 }

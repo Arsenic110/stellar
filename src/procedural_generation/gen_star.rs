@@ -1,5 +1,5 @@
-use crate::stellar_core::solar_system::Orbit;
-use crate::stellar_core::solar_system::celestial_body::Star;
+use crate::stellar_core::solar_system::{Orbit, celestial_body::Star};
+use super::data::StarData;
 
 pub fn generate_star(solar_mass: f64, age_gy: f64, metallicity: f64) -> StarData
 {
@@ -161,13 +161,4 @@ fn get_remnant_properties(mass: f64, _age_gy: f64, _metallicity: f64) -> (f64, f
 
     return (radius, luminosity, temperature, lifespan, spectral_type.to_string());
 
-}
-
-pub struct StarData {
-    pub mass: f64,
-    pub radius: f64,
-    pub luminosity: f64,
-    pub temperature: f64,
-    pub lifespan: f64,
-    pub spectral_type: String,
 }

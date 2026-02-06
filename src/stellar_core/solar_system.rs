@@ -3,13 +3,13 @@ use bevy::prelude::*;
 pub mod orbit;
 pub use orbit::Orbit;
 
-pub mod celestial_body;
-pub use celestial_body::{*, star::Luminosity};
-
 pub mod barycenter;
 pub use barycenter::Barycenter;
 
-use crate::{procedural_generation::gen_system::GeneratorData, stellar_core::solar_system::star::luminosity};
+pub mod celestial_body;
+pub use celestial_body::{Star, Planet, star::Luminosity, CelestialBody};
+
+use crate::procedural_generation::data::GeneratorData;
 
 pub struct SolarSystemPlugin;
 impl Plugin for SolarSystemPlugin {
@@ -46,6 +46,12 @@ fn setup_solar_system(
 
     let system = 
         crate::procedural_generation::gen_system::gen_system("eriku");
+
+    for data in &system {
+        
+    }
+
+    return;
 
     let mut stars = vec![];
     let mut planets = vec![];
