@@ -115,7 +115,7 @@ pub fn generate_planet(earth_mass: f64, density: f64, solar_flux: f64, magnetic_
     let p = PlanetData { 
         mass: earth_mass, 
         density: density, 
-        radius: radius / 1000.0, 
+        radius: radius / EARTH_RADIUS, 
         surface_gravity: surface_gravity, 
         atmos_pressure: atmos_pressure, 
         surface_temperature: temp, 

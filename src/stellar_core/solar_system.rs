@@ -47,47 +47,25 @@ fn setup_solar_system(
     let system = 
         crate::procedural_generation::gen_system::gen_system("eriku");
 
+    let mut i = 0;
     for data in &system {
-        
-    }
 
-    return;
-
-    let mut stars = vec![];
-    let mut planets = vec![];
-
-    for x in &system {
-        match x {
+        match data {
             GeneratorData::Barycenter(_) => {},
-            GeneratorData::StarData(s) => stars.push(s),
-            GeneratorData::PlanetData(p) => planets.push(p),
+            GeneratorData::StarData(data) => {
+                commands.spawn(Star::get_bundle_from_data(
+                    data, 0.0, 0.0, &mut images
+                ));
+            },
+            GeneratorData::PlanetData(data) => {
+                commands.spawn(Planet::get_bundle_from_data(
+                    data, 1000.0, i as f32 * 1000.0, &mut images
+                ));
+            },
         }
     }
 
-    for (_, star) in stars.into_iter().enumerate() {
-        commands.spawn(Star::get_bundle(
-            Star { spectral_type: star.spectral_type.clone().into() },
-            star.mass,
-            star.radius,
-            Luminosity { 0: star.luminosity },
-            0.0,
-            0.0,
-            &mut images
-        ));
-    }
-
-    for (i, planet) in planets.into_iter().enumerate() {
-        commands.spawn(Planet::get_bundle(
-            Planet {}, 
-            planet.mass, 
-            planet.radius, 
-            i as f32 * 1000.0, 
-            1000.0, 
-            &mut images
-        ));
-    }
-
-
+    println!("After loop print");
 }
 
 fn update_solar_system(_bodies: Query<&mut Planet>, mut _gizmos: Gizmos) {
