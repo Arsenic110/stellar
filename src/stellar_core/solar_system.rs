@@ -50,6 +50,10 @@ fn setup_solar_system(
     let mut i = 0;
     for data in &system {
 
+        if i > 2 && false {
+            break;
+        }
+
         match data {
             GeneratorData::Barycenter(_) => {},
             GeneratorData::StarData(data) => {
@@ -59,10 +63,12 @@ fn setup_solar_system(
             },
             GeneratorData::PlanetData(data) => {
                 commands.spawn(Planet::get_bundle_from_data(
-                    data, 1000.0, i as f32 * 1000.0, &mut images
+                    data, i as f32 * 100.0, 100.0, &mut images
                 ));
             },
         }
+
+        i += 1;
     }
 
     println!("After loop print");

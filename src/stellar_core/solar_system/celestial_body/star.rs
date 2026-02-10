@@ -21,8 +21,10 @@ impl Star {
         x: f32, y: f32, 
         mut images: &mut ResMut<Assets<Image>>, 
     ) -> (CelestialBody, Self, Luminosity, Sprite, Transform) {
-        let tex_size = (radius as u32 * 10).max(32);
-        let custom_size = Vec2::splat((radius as f32 * 100.0).max(1000.0));
+
+        let tex_size = (radius as u32 * 100000).max(1).min(32);
+        let custom_size = 
+            Some(Vec2::splat((radius as f32 * 100.0).max(1.0).min(256.0)));
 
         (
             CelestialBody { name: "root".into(), mass, radius },
@@ -33,7 +35,7 @@ impl Star {
                     tex_size, tex_size, &mut images,
                     255, 225, 30, 255
                 ),
-                custom_size: Some(custom_size),
+                custom_size,
                 ..default()
             },
             Transform::from_xyz(x, y, 0.0)
@@ -46,10 +48,9 @@ impl Star {
         mut images: &mut ResMut<Assets<Image>>, 
     ) -> (CelestialBody, Self, Luminosity, Sprite, Transform) {
 
-        let tex_size = (data.radius as u32 * 100000).min(32);
-        let custom_size = Some(Vec2::splat((data.radius as f32 * 100.0).min(256.0)));
-
-        dbg!((tex_size, custom_size));
+        let tex_size = (data.radius * 100.0).max(1.0).min(32.0) as u32;
+        let custom_size = 
+            Some(Vec2::splat((data.radius * 100.0).max(1.0).min(256.0) as f32));
 
         (
             CelestialBody { name: "root".into(), mass: data.mass, radius: data.radius },
