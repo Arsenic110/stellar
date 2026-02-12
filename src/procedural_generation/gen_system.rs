@@ -2,18 +2,14 @@ use rand::{rngs::SmallRng, SeedableRng, Rng};
 use sha2::{Sha256, Digest};
 use std::f64::consts::E;
 
+use super::data::{StarData, PlanetData, GeneratorData};
+use crate::stellar_utils::{MTree, unit_conversion::*};
 use crate::procedural_generation::gen_star::generate_star;
 use crate::stellar_core::solar_system::{
     celestial_body::CelestialBody, 
-    Barycenter
+    Barycenter,
+    Orbit,
 };
-
-use super::data::{StarData, PlanetData, GeneratorData};
-
-use crate::stellar_utils::unit_conversion::*;
-
-use crate::stellar_core::solar_system::Orbit;
-use crate::stellar_utils::MTree;
 
 pub fn gen_system(seed: &str) -> MTree<GeneratorData> {
     //init rng from the seed

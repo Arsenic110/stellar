@@ -13,6 +13,7 @@ impl Plugin for GamePlugin {
                     solar_system::SolarSystemPlugin,
                     ui::info_ui::UIPlugin,
                 )
-            );
+            )
+        ;
     }
 }
